@@ -8,11 +8,11 @@ import { View, Text, StyleSheet } from 'react-native';
 import HomeScreen from '../screens/HomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import PostScreen from '../screens/PostScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 // Temporary placeholder screens
 const SearchScreen = () => <View style={styles.center}><Text style={styles.text}>Search Screen</Text></View>;
 const ChatsScreen = () => <View style={styles.center}><Text style={styles.text}>Chats Screen</Text></View>;
-const ProfileScreen = () => <View style={styles.center}><Text style={styles.text}>Profile Screen</Text></View>;
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
