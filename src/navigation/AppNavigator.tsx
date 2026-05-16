@@ -6,11 +6,11 @@ import { NavigationContainer } from '@react-navigation/native';
 import { View, Text, StyleSheet } from 'react-native';
 
 import HomeScreen from '../screens/HomeScreen';
-import LoginScreen from '../screens/LoginScreen'; // <-- Imported our new screen
+import LoginScreen from '../screens/LoginScreen';
+import PostScreen from '../screens/PostScreen';
 
 // Temporary placeholder screens
 const SearchScreen = () => <View style={styles.center}><Text style={styles.text}>Search Screen</Text></View>;
-const PostScreen = () => <View style={styles.center}><Text style={styles.text}>Post Listing Screen</Text></View>;
 const ChatsScreen = () => <View style={styles.center}><Text style={styles.text}>Chats Screen</Text></View>;
 const ProfileScreen = () => <View style={styles.center}><Text style={styles.text}>Profile Screen</Text></View>;
 
