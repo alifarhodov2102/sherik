@@ -9,10 +9,11 @@ import HomeScreen from '../screens/HomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import PostScreen from '../screens/PostScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import ChatsScreen from '../screens/ChatsScreen';
 
 // Temporary placeholder screens
 const SearchScreen = () => <View style={styles.center}><Text style={styles.text}>Search Screen</Text></View>;
-const ChatsScreen = () => <View style={styles.center}><Text style={styles.text}>Chats Screen</Text></View>;
+
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
