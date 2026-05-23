@@ -2,10 +2,13 @@
 import React, { useState } from 'react';
 import { 
   View, Text, TextInput, TouchableOpacity, StyleSheet, 
-  SafeAreaView, KeyboardAvoidingView, Platform, Modal, Pressable, ActivityIndicator 
+  SafeAreaView, KeyboardAvoidingView, Platform, ActivityIndicator 
 } from 'react-native';
+
+// --- FIREBASE IMPORTS ---
 import { signInAnonymously } from 'firebase/auth';
-import { auth } from '../firebase/config';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase/config';
 
 const LANGUAGES = [
   { code: 'uz', label: 'UZ', flag: '🇺🇿' },
@@ -33,7 +36,6 @@ export default function LoginScreen({ navigation }: any) {
   const simulateSendOTP = () => {
     if (phoneNumber.replace(/\s/g, '').length !== 9) return;
     setIsLoading(true);
-    // Fake a 1-second network delay for realism
     setTimeout(() => {
       setIsLoading(false);
       setStep('OTP');
@@ -45,10 +47,17 @@ export default function LoginScreen({ navigation }: any) {
     setIsLoading(true);
     
     try {
-      // This creates a REAL Firebase session so our database and chats will work!
-      await signInAnonymously(auth);
+      // 1. Create the session
+      const userCredential = await signInAnonymously(auth);
       
-      // In the next step, we will save their phoneNumber to Firestore here
+      // 2. NEW: Save the typed phone number to their Firestore profile!
+      const userDocRef = doc(db, 'users', userCredential.user.uid);
+      await setDoc(userDocRef, {
+        phoneNumber: `+998 ${phoneNumber}`,
+        createdAt: new Date(),
+      }, { merge: true }); // Merge ensures we don't overwrite their name if they log in again later
+      
+      // 3. Go to the app
       navigation.replace('MainTabs');
     } catch (error) {
       console.error(error);
@@ -64,6 +73,7 @@ export default function LoginScreen({ navigation }: any) {
         <TouchableOpacity style={styles.langCircle} onPress={() => setIsLangModalVisible(true)}>
           <Text style={styles.langCircleText}>{selectedLang.label}</Text>
         </TouchableOpacity>
+        {/* Notice Skip does NOT sign you in. It leaves auth.currentUser as null! */}
         <TouchableOpacity onPress={() => navigation.replace('MainTabs')}>
           <Text style={styles.skipText}>Skip</Text>
         </TouchableOpacity>
@@ -105,13 +115,10 @@ export default function LoginScreen({ navigation }: any) {
           </View>
         )}
       </KeyboardAvoidingView>
-
-      {/* Language Modal Omitted for brevity, paste your existing modal styles here if needed */}
     </SafeAreaView>
   );
 }
 
-// Keep your exact same StyleSheet from the previous step here
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
   topNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 12 },

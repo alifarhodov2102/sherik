@@ -38,9 +38,13 @@ const DUMMY_CHATS = [
   }
 ];
 
-export default function ChatsScreen() {
+export default function ChatsScreen({ navigation }: any) {
   const renderChatItem = ({ item }: { item: typeof DUMMY_CHATS[0] }) => (
-    <TouchableOpacity style={styles.chatItem}>
+   <TouchableOpacity 
+    style={styles.chatItem} 
+    onPress={() => navigation.navigate('ChatRoom', { name: item.name, chatId: item.id })}
+  >
+        
       <Image source={{ uri: item.avatar }} style={styles.avatar} />
       
       <View style={styles.chatContent}>

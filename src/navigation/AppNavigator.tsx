@@ -11,6 +11,7 @@ import PostScreen from '../screens/PostScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ChatsScreen from '../screens/ChatsScreen';
 import SearchScreen from '../screens/SearchScreen';
+import ChatRoomScreen from '../screens/ChatRoomScreen';
 
 
 const Tab = createBottomTabNavigator();
@@ -38,10 +39,10 @@ function TabNavigator() {
 export default function AppNavigator() {
   return (
     <NavigationContainer>
-      {/* The Stack Navigator controls the whole app flow */}
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="MainTabs" component={TabNavigator} />
+        <Stack.Screen name="ChatRoom" component={ChatRoomScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
