@@ -50,15 +50,15 @@ export default function LoginScreen({ navigation }: any) {
       // 1. Create the session
       const userCredential = await signInAnonymously(auth);
       
-      // 2. NEW: Save the typed phone number to their Firestore profile!
+      // 2. Save the typed phone number to their Firestore profile!
       const userDocRef = doc(db, 'users', userCredential.user.uid);
       await setDoc(userDocRef, {
         phoneNumber: `+998 ${phoneNumber}`,
         createdAt: new Date(),
       }, { merge: true }); // Merge ensures we don't overwrite their name if they log in again later
       
-      // 3. Go to the app
-      navigation.replace('MainTabs');
+      // 3. Go to the Onboarding Screen instead of MainTabs!
+      navigation.replace('Onboarding');
     } catch (error) {
       console.error(error);
       alert("Something went wrong connecting to the database.");

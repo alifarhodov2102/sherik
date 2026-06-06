@@ -28,6 +28,7 @@ export default function HomeScreen({ navigation }: any) {
           genderPreference: data.genderPreference,
           isVerified: data.isVerified || false,
           imageUrl: data.imageUrl,
+          userId: data.userId, // <--- ADDED THIS VITAL LINE!
         } as Listing;
       });
       setListings(liveListings);
@@ -36,7 +37,8 @@ export default function HomeScreen({ navigation }: any) {
 
     // 2. Fetch Profile Name for the Avatar Circle
     let unsubscribeUser = () => {};
-    if (auth.currentUser && !auth.currentUser.isAnonymous) {
+    // Removed the .isAnonymous check here to match our auth setup
+    if (auth.currentUser) {
       const userDocRef = doc(db, 'users', auth.currentUser.uid);
       unsubscribeUser = onSnapshot(userDocRef, (docSnap) => {
         if (docSnap.exists() && docSnap.data().name) {

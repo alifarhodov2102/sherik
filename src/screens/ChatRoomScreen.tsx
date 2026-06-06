@@ -1,112 +1,217 @@
 // src/screens/ChatRoomScreen.tsx
+
 import React, { useState, useEffect } from 'react';
-import { 
-  View, Text, TextInput, TouchableOpacity, StyleSheet, 
-  SafeAreaView, FlatList, KeyboardAvoidingView, Platform 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 
-// --- FIREBASE IMPORTS ---
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
-import { db, auth } from '../firebase/config';
+import {
+  collection,
+  doc,
+  addDoc,
+  onSnapshot,
+  query,
+  orderBy,
+  setDoc,
+  serverTimestamp,
+} from 'firebase/firestore';
+
+import { auth, db } from '../firebase/config';
 
 export default function ChatRoomScreen({ route, navigation }: any) {
-  // In a real app, we pass the chatId from the previous screen. 
-  // For testing, we'll use a hardcoded 'test_chat' if none is provided.
-  const chatId = route.params?.chatId || 'test_chat';
-  const chatName = route.params?.name || 'Roommate';
+  const chatId = route.params?.chatId;
+  const hostId = route.params?.hostId;
 
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState('');
 
-  // 1. Listen for real-time messages
   useEffect(() => {
-    const messagesRef = collection(db, 'chats', chatId, 'messages');
-    const q = query(messagesRef, orderBy('createdAt', 'asc'));
+    if (!chatId) return;
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const liveMessages = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setMessages(liveMessages);
-    });
+    const messagesRef = collection(db, 'chats', chatId, 'messages');
+
+    const q = query(
+      messagesRef,
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const loadedMessages = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setMessages(loadedMessages);
+      },
+      (error) => {
+        console.error('Error loading messages:', error);
+      }
+    );
 
     return () => unsubscribe();
   }, [chatId]);
 
-  // 2. Send a message
   const sendMessage = async () => {
-    if (inputText.trim() === '' || !auth.currentUser) return;
+    if (!inputText.trim()) return;
+    if (!auth.currentUser) return;
+    if (!chatId) return;
 
     const textToSend = inputText.trim();
-    setInputText(''); // Clear input instantly for good UX
+
+    setInputText('');
 
     try {
-      const messagesRef = collection(db, 'chats', chatId, 'messages');
+      // Add message
+      const messagesRef = collection(
+        db,
+        'chats',
+        chatId,
+        'messages'
+      );
+
       await addDoc(messagesRef, {
         text: textToSend,
         senderId: auth.currentUser.uid,
         createdAt: serverTimestamp(),
       });
+
+      // Update parent chat document
+      const chatRef = doc(db, 'chats', chatId);
+
+      await setDoc(
+        chatRef,
+        {
+          lastMessage: textToSend,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
     } catch (error) {
-      console.error("Error sending message: ", error);
+      console.error('Error sending message:', error);
     }
   };
 
-  // 3. Render each message bubble
-  const renderMessage = ({ item }: { item: any }) => {
-    const isMe = item.senderId === auth.currentUser?.uid;
+  const renderMessage = ({ item }: any) => {
+    const isMe =
+      item.senderId === auth.currentUser?.uid;
 
     return (
-      <View style={[styles.messageBubble, isMe ? styles.myBubble : styles.theirBubble]}>
-        <Text style={[styles.messageText, isMe ? styles.myText : styles.theirText]}>
+      <View
+        style={[
+          styles.messageBubble,
+          isMe
+            ? styles.myMessage
+            : styles.theirMessage,
+        ]}
+      >
+        <Text
+          style={[
+            styles.messageText,
+            isMe
+              ? styles.myMessageText
+              : styles.theirMessageText,
+          ]}
+        >
           {item.text}
         </Text>
       </View>
     );
   };
 
+  if (!chatId) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>
+            Chat room not found.
+          </Text>
+
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backErrorButton}
+          >
+            <Text style={styles.backErrorText}>
+              Go Back
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
-        style={styles.keyboardAvoid} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backText}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{chatName}</Text>
-          <View style={{ width: 50 }} /> {/* Spacer to center title */}
-        </View>
+      {/* Header */}
 
-        {/* Messages List */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Text style={styles.backText}>
+            ← Back
+          </Text>
+        </TouchableOpacity>
+
+        <Text style={styles.headerTitle}>
+          Chat Room
+        </Text>
+
+        <View style={{ width: 60 }} />
+      </View>
+
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={
+          Platform.OS === 'ios'
+            ? 'padding'
+            : 'height'
+        }
+      >
+        {/* Messages */}
+
         <FlatList
           data={messages}
           keyExtractor={(item) => item.id}
           renderItem={renderMessage}
+          inverted
           contentContainerStyle={styles.messageList}
           showsVerticalScrollIndicator={false}
-          // Optional: automatically scroll to bottom, though works best with inverted lists in complex apps
         />
 
-        {/* Input Area */}
-        <View style={styles.inputContainer}>
+        {/* Input */}
+
+        <View style={styles.inputArea}>
           <TextInput
             style={styles.input}
             placeholder="Type a message..."
             value={inputText}
             onChangeText={setInputText}
-            placeholderTextColor="#A0A0A0"
+            multiline
           />
-          <TouchableOpacity 
-            style={[styles.sendButton, inputText.trim() === '' && styles.sendButtonDisabled]} 
+
+          <TouchableOpacity
+            style={[
+              styles.sendButton,
+              !inputText.trim() &&
+                styles.sendButtonDisabled,
+            ]}
             onPress={sendMessage}
-            disabled={inputText.trim() === ''}
+            disabled={!inputText.trim()}
           >
-            <Text style={styles.sendButtonText}>Send</Text>
+            <Text style={styles.sendButtonText}>
+              Send
+            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -115,22 +220,131 @@ export default function ChatRoomScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F7F7F7' },
-  keyboardAvoid: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#EAEAEA' },
-  backButton: { padding: 8 },
-  backText: { fontSize: 16, color: '#111', fontWeight: '600' },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111' },
-  messageList: { padding: 16, flexGrow: 1, justifyContent: 'flex-end' },
-  messageBubble: { maxWidth: '80%', padding: 12, borderRadius: 16, marginBottom: 8 },
-  myBubble: { alignSelf: 'flex-end', backgroundColor: '#111', borderBottomRightRadius: 4 },
-  theirBubble: { alignSelf: 'flex-start', backgroundColor: '#EAEAEA', borderBottomLeftRadius: 4 },
-  messageText: { fontSize: 16 },
-  myText: { color: '#FFF' },
-  theirText: { color: '#111' },
-  inputContainer: { flexDirection: 'row', padding: 16, backgroundColor: '#FFF', borderTopWidth: 1, borderTopColor: '#EAEAEA', alignItems: 'center' },
-  input: { flex: 1, backgroundColor: '#F5F5F5', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, fontSize: 16, maxHeight: 100 },
-  sendButton: { marginLeft: 12, backgroundColor: '#111', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20 },
-  sendButtonDisabled: { backgroundColor: '#A0A0A0' },
-  sendButtonText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
+  container: {
+    flex: 1,
+    backgroundColor: '#F7F7F7',
+  },
+
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EAEAEA',
+  },
+
+  backButton: {
+    padding: 8,
+  },
+
+  backText: {
+    fontSize: 16,
+    color: '#111',
+    fontWeight: '600',
+  },
+
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111',
+  },
+
+  messageList: {
+    padding: 16,
+  },
+
+  messageBubble: {
+    maxWidth: '80%',
+    padding: 12,
+    borderRadius: 16,
+    marginBottom: 12,
+  },
+
+  myMessage: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#111',
+    borderBottomRightRadius: 4,
+  },
+
+  theirMessage: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#EAEAEA',
+    borderBottomLeftRadius: 4,
+  },
+
+  messageText: {
+    fontSize: 16,
+  },
+
+  myMessageText: {
+    color: '#FFF',
+  },
+
+  theirMessageText: {
+    color: '#111',
+  },
+
+  inputArea: {
+    flexDirection: 'row',
+    padding: 16,
+    backgroundColor: '#FFF',
+    borderTopWidth: 1,
+    borderTopColor: '#EAEAEA',
+    alignItems: 'center',
+  },
+
+  input: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 16,
+    marginRight: 12,
+    maxHeight: 100,
+  },
+
+  sendButton: {
+    backgroundColor: '#111',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+
+  sendButtonDisabled: {
+    backgroundColor: '#CCC',
+  },
+
+  sendButtonText: {
+    color: '#FFF',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+
+  errorText: {
+    fontSize: 18,
+    marginBottom: 16,
+    color: '#111',
+  },
+
+  backErrorButton: {
+    backgroundColor: '#111',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+
+  backErrorText: {
+    color: '#FFF',
+    fontWeight: '700',
+  },
 });

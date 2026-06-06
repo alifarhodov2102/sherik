@@ -1,10 +1,11 @@
-// src/types/index.ts
+// src/types.ts (or similar)
 
 export interface Listing {
   id: string;
   price: number;
   district: string;
-  genderPreference: 'Male' | 'Female' | 'Any';
+  genderPreference: string;
   isVerified: boolean;
   imageUrl: string;
+  userId: string; 
 }

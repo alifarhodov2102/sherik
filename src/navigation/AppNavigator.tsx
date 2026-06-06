@@ -12,6 +12,7 @@ import ProfileScreen from '../screens/ProfileScreen';
 import ChatsScreen from '../screens/ChatsScreen';
 import SearchScreen from '../screens/SearchScreen';
 import ChatRoomScreen from '../screens/ChatRoomScreen';
+import OnboardingScreen from '../screens/OnboardingScreen';
 
 
 const Tab = createBottomTabNavigator();
@@ -41,6 +42,7 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         <Stack.Screen name="MainTabs" component={TabNavigator} />
         <Stack.Screen name="ChatRoom" component={ChatRoomScreen} />
       </Stack.Navigator>
