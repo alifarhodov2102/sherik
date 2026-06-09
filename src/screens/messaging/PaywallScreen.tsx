@@ -6,7 +6,7 @@ import {
 
 // --- FIREBASE IMPORTS ---
 import { doc, setDoc } from 'firebase/firestore';
-import { db, auth } from '../firebase/config';
+import { db, auth } from '../../firebase/config';
 
 export default function PaywallScreen({ route, navigation }: any) {
   const { chatId, hostId } = route.params;

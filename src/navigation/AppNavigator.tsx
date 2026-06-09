@@ -1,20 +1,26 @@
 // src/navigation/AppNavigator.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
-import { View, Text, StyleSheet, Image, Platform } from 'react-native'; // <-- Added Platform here
+import { View, Text, StyleSheet, Image, Platform, ActivityIndicator } from 'react-native';
 
-import HomeScreen from '../screens/HomeScreen';
-import LoginScreen from '../screens/LoginScreen';
-import PostScreen from '../screens/PostScreen';
-import ProfileScreen from '../screens/ProfileScreen';
-import ChatsScreen from '../screens/ChatsScreen';
-import SearchScreen from '../screens/SearchScreen';
-import ChatRoomScreen from '../screens/ChatRoomScreen';
-import OnboardingScreen from '../screens/OnboardingScreen';
-import PaywallScreen from '../screens/PaywallScreen';
-import ListingDetailScreen from '../screens/ListingDetailScreen';
+// --- FIREBASE IMPORTS ---
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../firebase/config';
+
+import HomeScreen from '../screens/tabs/HomeScreen';
+import LoginScreen from '../screens/auth/LoginScreen';
+import PostScreen from '../screens/tabs/PostScreen';
+import ProfileScreen from '../screens/tabs/ProfileScreen';
+import ChatsScreen from '../screens/tabs/ChatsScreen';
+import SearchScreen from '../screens/tabs/SearchScreen';
+import ChatRoomScreen from '../screens/messaging/ChatRoomScreen';
+import OnboardingScreen from '../screens/auth/OnboardingScreen';
+import PaywallScreen from '../screens/messaging/PaywallScreen';
+import ListingDetailScreen from '../screens/listings/ListingDetailScreen';
+import MyListingsScreen from '../screens/listings/MyListingsScreen';
+import EditListingScreen from '../screens/listings/EditListingScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -77,15 +83,44 @@ function TabNavigator() {
 }
 
 export default function AppNavigator() {
+  // State to hold the app while Firebase checks local storage
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [initialRoute, setInitialRoute] = useState<'Login' | 'MainTabs'>('Login');
+
+  useEffect(() => {
+    // Firebase Listener to check if they are already logged in
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setInitialRoute('MainTabs'); // User found! Send them home.
+      } else {
+        setInitialRoute('Login');    // No user! Send them to login.
+      }
+      setIsInitializing(false);      // Stop the loading spinner
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Show a blank white screen with a spinner for the 0.5 seconds it takes to check
+  if (isInitializing) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#111" />
+      </View>
+    );
+  }
+
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         <Stack.Screen name="MainTabs" component={TabNavigator} />
         <Stack.Screen name="Paywall" component={PaywallScreen} />
         <Stack.Screen name="ChatRoom" component={ChatRoomScreen} />
         <Stack.Screen name="ListingDetail" component={ListingDetailScreen} />
+        <Stack.Screen name="MyListings" component={MyListingsScreen} />
+        <Stack.Screen name="EditListing" component={EditListingScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -93,5 +128,6 @@ export default function AppNavigator() {
 
 const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F7F7F7' },
-  text: { fontSize: 18, fontWeight: '600', color: '#333' }
+  text: { fontSize: 18, fontWeight: '600', color: '#333' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFF' },
 });

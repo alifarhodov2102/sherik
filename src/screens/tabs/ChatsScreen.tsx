@@ -21,7 +21,7 @@ import {
   getDoc,
 } from 'firebase/firestore';
 
-import { auth, db } from '../firebase/config';
+import { auth, db } from '../../firebase/config';
 
 // NEW: This component fetches the specific user's name for each row
 const ChatRow = ({ item, navigation }: { item: any; navigation: any }) => {

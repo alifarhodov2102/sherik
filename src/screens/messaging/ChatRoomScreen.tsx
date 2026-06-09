@@ -24,7 +24,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 
-import { auth, db } from '../firebase/config';
+import { auth, db } from '../../firebase/config';
 
 export default function ChatRoomScreen({ route, navigation }: any) {
   const chatId = route.params?.chatId;
@@ -276,6 +276,8 @@ const styles = StyleSheet.create({
 
   messageText: {
     fontSize: 16,
+    letterSpacing: 0,
+    fontWeight: '400',
   },
 
   myMessageText: {
@@ -304,6 +306,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginRight: 12,
     maxHeight: 100,
+    letterSpacing: 0,
+    fontWeight: '400',
   },
 
   sendButton: {

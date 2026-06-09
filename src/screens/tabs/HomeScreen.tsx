@@ -1,12 +1,12 @@
 // src/screens/HomeScreen.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, SafeAreaView, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
-import ListingCard from '../components/ListingCard';
-import { Listing } from '../types';
+import ListingCard from '../../components/ListingCard';
+import { Listing } from '../../types';
 
 // --- FIREBASE IMPORTS ---
 import { collection, query, orderBy, onSnapshot, doc } from 'firebase/firestore';
-import { db, auth } from '../firebase/config';
+import { db, auth } from '../../firebase/config';
 
 export default function HomeScreen({ navigation }: any) {
   const [listings, setListings] = useState<Listing[]>([]);

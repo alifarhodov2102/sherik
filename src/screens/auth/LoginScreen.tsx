@@ -6,9 +6,9 @@ import {
 } from 'react-native';
 
 // --- FIREBASE IMPORTS ---
-import { signInAnonymously } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase/config';
+import { auth, db } from '../../firebase/config';
 
 const LANGUAGES = [
   { code: 'uz', label: 'UZ', flag: '🇺🇿' },
@@ -46,22 +46,37 @@ export default function LoginScreen({ navigation }: any) {
     if (code.length !== 6) return;
     setIsLoading(true);
     
+    // THE MVP CHEAT CODE: Turn their phone into a hidden email
+    const cleanPhone = phoneNumber.replace(/\s/g, '');
+    const fakeEmail = `+998${cleanPhone}@sherik.app`;
+    const fakePassword = `SherikSecureMVP123!`; 
+    
     try {
-      // 1. Create the session
-      const userCredential = await signInAnonymously(auth);
+      // 1. TRY TO LOG IN AN EXISTING USER
+      await signInWithEmailAndPassword(auth, fakeEmail, fakePassword);
       
-      // 2. Save the typed phone number to their Firestore profile!
-      const userDocRef = doc(db, 'users', userCredential.user.uid);
-      await setDoc(userDocRef, {
-        phoneNumber: `+998 ${phoneNumber}`,
-        createdAt: new Date(),
-      }, { merge: true }); // Merge ensures we don't overwrite their name if they log in again later
+      // If it succeeds, they are a returning user! Skip onboarding and go home.
+      navigation.replace('MainTabs');
       
-      // 3. Go to the Onboarding Screen instead of MainTabs!
-      navigation.replace('Onboarding');
-    } catch (error) {
-      console.error(error);
-      alert("Something went wrong connecting to the database.");
+    } catch (error: any) {
+      // 2. IF LOGIN FAILS, THEY ARE A BRAND NEW USER
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, fakeEmail, fakePassword);
+        
+        // Save their new profile in the database
+        const userDocRef = doc(db, 'users', userCredential.user.uid);
+        await setDoc(userDocRef, {
+          phoneNumber: `+998 ${phoneNumber}`,
+          createdAt: new Date(),
+        }, { merge: true }); 
+        
+        // Send brand new users to the Onboarding Screen
+        navigation.replace('Onboarding');
+        
+      } catch (createError) {
+        console.error(createError);
+        alert("Something went wrong creating your account.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +88,6 @@ export default function LoginScreen({ navigation }: any) {
         <TouchableOpacity style={styles.langCircle} onPress={() => setIsLangModalVisible(true)}>
           <Text style={styles.langCircleText}>{selectedLang.label}</Text>
         </TouchableOpacity>
-        {/* Notice Skip does NOT sign you in. It leaves auth.currentUser as null! */}
         <TouchableOpacity onPress={() => navigation.replace('MainTabs')}>
           <Text style={styles.skipText}>Skip</Text>
         </TouchableOpacity>
@@ -134,7 +148,7 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 },
   inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F5F5F5', borderRadius: 12, paddingHorizontal: 16, height: 56, marginBottom: 24 },
   prefix: { fontSize: 16, fontWeight: '600', color: '#111', marginRight: 8 },
-  input: { flex: 1, fontSize: 16, color: '#111', fontWeight: '500' },
+  input: { flex: 1, fontSize: 16, color: '#111', letterSpacing: 0, fontWeight: '400'},
   button: { backgroundColor: '#111', height: 56, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
   buttonText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
 });

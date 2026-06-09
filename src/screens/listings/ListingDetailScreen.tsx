@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
 import { doc, getDoc } from 'firebase/firestore';
-import { db, auth } from '../firebase/config';
+import { db, auth } from '../../firebase/config';
 
 export default function ListingDetailScreen({ route, navigation }: any) {
   const { listing } = route.params;

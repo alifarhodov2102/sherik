@@ -4,12 +4,12 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, 
   SafeAreaView, FlatList, ActivityIndicator, Keyboard 
 } from 'react-native';
-import ListingCard from '../components/ListingCard';
-import { Listing } from '../types';
+import ListingCard from '../../components/ListingCard';
+import { Listing } from '../../types';
 
 // --- FIREBASE IMPORTS ---
 import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { db } from '../../firebase/config';
 
 export default function SearchScreen() {
   const [district, setDistrict] = useState('');
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
   formContainer: { padding: 20, backgroundColor: '#FFF', marginBottom: 10 },
   row: { flexDirection: 'row', marginBottom: 16 },
   label: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 },
-  input: { backgroundColor: '#F5F5F5', borderRadius: 10, paddingHorizontal: 16, height: 48, fontSize: 16, color: '#111' },
+  input: { backgroundColor: '#F5F5F5', borderRadius: 10, paddingHorizontal: 16, height: 48, fontSize: 16, color: '#111', letterSpacing: 0, fontWeight: '400' },
   chipContainer: { flexDirection: 'row', marginBottom: 20, gap: 10 },
   chip: { flex: 1, paddingVertical: 12, borderRadius: 20, backgroundColor: '#F5F5F5', alignItems: 'center' },
   chipActive: { backgroundColor: '#111' },
