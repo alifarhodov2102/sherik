@@ -1,4 +1,4 @@
-// src/screens/ListingDetailScreen.tsx
+// src/screens/listings/ListingDetailScreen.tsx
 import React from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
 import { doc, getDoc } from 'firebase/firestore';
@@ -23,7 +23,10 @@ export default function ListingDetailScreen({ route, navigation }: any) {
         return;
       }
 
-      const chatId = [myId, hostId].sort().join('_');
+      // THE LEAK FIX: Securely attach the listing ID here too!
+      const userPair = [myId, hostId].sort().join('_');
+      const chatId = `${listing.id}_${userPair}`;
+      
       const chatRef = doc(db, 'chats', chatId);
       const chatSnap = await getDoc(chatRef);
 
