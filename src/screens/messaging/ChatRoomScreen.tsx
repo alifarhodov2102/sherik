@@ -29,6 +29,7 @@ import { auth, db } from '../../firebase/config';
 export default function ChatRoomScreen({ route, navigation }: any) {
   const chatId = route.params?.chatId;
   const hostId = route.params?.hostId;
+  const listing = route.params?.listing; // NEW: Capture the room context passed into the chat
 
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState('');
@@ -152,7 +153,6 @@ export default function ChatRoomScreen({ route, navigation }: any) {
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -167,7 +167,13 @@ export default function ChatRoomScreen({ route, navigation }: any) {
           Chat Room
         </Text>
 
-        <View style={{ width: 60 }} />
+        {/* NEW: Replaced the layout spacer with a link to the Unlocked Host Contact Profile */}
+        <TouchableOpacity 
+          onPress={() => navigation.navigate('HostProfile', { hostId, listing })} 
+          style={styles.infoButton}
+        >
+          <Text style={styles.infoText}>Contact Info</Text>
+        </TouchableOpacity>
       </View>
 
       <KeyboardAvoidingView
@@ -179,7 +185,6 @@ export default function ChatRoomScreen({ route, navigation }: any) {
         }
       >
         {/* Messages */}
-
         <FlatList
           data={messages}
           keyExtractor={(item) => item.id}
@@ -190,7 +195,6 @@ export default function ChatRoomScreen({ route, navigation }: any) {
         />
 
         {/* Input */}
-
         <View style={styles.inputArea}>
           <TextInput
             style={styles.input}
@@ -236,7 +240,8 @@ const styles = StyleSheet.create({
   },
 
   backButton: {
-    padding: 8,
+    width: 100,
+    paddingVertical: 8,
   },
 
   backText: {
@@ -249,6 +254,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: '#111',
+  },
+
+  // NEW: Navigation alignments for the Host Profile trigger
+  infoButton: {
+    width: 100,
+    paddingVertical: 8,
+    alignItems: 'flex-end',
+  },
+
+  infoText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#00C853',
   },
 
   messageList: {

@@ -31,9 +31,11 @@ export default function ListingDetailScreen({ route, navigation }: any) {
       const chatSnap = await getDoc(chatRef);
 
       if (!chatSnap.exists()) {
-        navigation.navigate('Paywall', { chatId, hostId });
+        // NEW: Passed the 'listing' object into the Paywall
+        navigation.navigate('Paywall', { chatId, hostId, listing });
       } else {
-        navigation.navigate('ChatRoom', { chatId, hostId });
+        // NEW: Passed the 'listing' object into the ChatRoom
+        navigation.navigate('ChatRoom', { chatId, hostId, listing });
       }
     } catch (error) {
       console.error('Error starting chat:', error);

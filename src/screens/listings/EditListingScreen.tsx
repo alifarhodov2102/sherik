@@ -1,4 +1,4 @@
-// src/screens/EditListingScreen.tsx
+// src/screens/listings/EditListingScreen.tsx
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from 'react-native';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -13,11 +13,28 @@ export default function EditListingScreen({ route, navigation }: any) {
   const [description, setDescription] = useState(listing.description || '');
   const [roomType, setRoomType] = useState<'Single' | 'Shared'>(listing.roomType || 'Single');
   const [gender, setGender] = useState<'Male' | 'Female' | 'Any'>(listing.genderPreference || 'Any');
+  
+  // NEW: Location Link State (pre-filled if they already have one)
+  const [locationLink, setLocationLink] = useState(listing.locationLink || '');
+  
   const [isLoading, setIsLoading] = useState(false);
+
+  // NEW: Security Check for Map Links
+  const isValidMapLink = (url: string) => {
+    if (!url.trim()) return true; // Optional field
+    const mapRegex = /(google\.com\/maps|maps\.app\.goo\.gl|goo\.gl\/maps|yandex\.[a-z]{2,3}\/maps|yandex\.com|2gis\.uz|go\.2gis\.com)/i;
+    return mapRegex.test(url);
+  };
 
   const handleUpdate = async () => {
     if (!district || !price || !description) {
       Alert.alert("Missing Info", "Please fill out the district, price, and description.");
+      return;
+    }
+
+    // NEW: Link Validation
+    if (!isValidMapLink(locationLink)) {
+      Alert.alert("Invalid Link", "Please provide a valid Google Maps, Yandex, or 2GIS link.");
       return;
     }
 
@@ -30,6 +47,7 @@ export default function EditListingScreen({ route, navigation }: any) {
         roomType: roomType,
         genderPreference: gender,
         description: description.trim(),
+        locationLink: locationLink.trim(), // <-- NEW: Updates the link in the database
       });
       
       Alert.alert("Success!", "Your room has been updated.");
@@ -80,6 +98,17 @@ export default function EditListingScreen({ route, navigation }: any) {
 
           <Text style={styles.label}>Description & Rules</Text>
           <TextInput style={[styles.input, styles.textArea]} multiline numberOfLines={4} value={description} onChangeText={setDescription} />
+
+          {/* NEW: Map Link Input */}
+          <Text style={styles.label}>Location Map Link (Optional)</Text>
+          <TextInput 
+            style={styles.input} 
+            placeholder="Paste Google Maps, Yandex, or 2GIS link" 
+            value={locationLink} 
+            onChangeText={setLocationLink} 
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
 
           <TouchableOpacity style={styles.submitButton} onPress={handleUpdate} disabled={isLoading}>
             {isLoading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.submitButtonText}>Save Changes</Text>}

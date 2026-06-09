@@ -10,4 +10,5 @@ export interface Listing {
   userId: string; 
   roomType?: string;
   description?: string;
+  locationLink?: string;
 }

@@ -21,6 +21,9 @@ import PaywallScreen from '../screens/messaging/PaywallScreen';
 import ListingDetailScreen from '../screens/listings/ListingDetailScreen';
 import MyListingsScreen from '../screens/listings/MyListingsScreen';
 import EditListingScreen from '../screens/listings/EditListingScreen';
+import HostProfileScreen from '../screens/listings/HostProfileScreen';
+import UnlockedRoomsScreen from '../screens/listings/UnlockedRoomsScreen';
+import EditProfileScreen from '../screens/auth/EditProfileScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -118,9 +121,12 @@ export default function AppNavigator() {
         <Stack.Screen name="MainTabs" component={TabNavigator} />
         <Stack.Screen name="Paywall" component={PaywallScreen} />
         <Stack.Screen name="ChatRoom" component={ChatRoomScreen} />
+        <Stack.Screen name="HostProfile" component={HostProfileScreen} />
         <Stack.Screen name="ListingDetail" component={ListingDetailScreen} />
         <Stack.Screen name="MyListings" component={MyListingsScreen} />
         <Stack.Screen name="EditListing" component={EditListingScreen} />
+        <Stack.Screen name="UnlockedRooms" component={UnlockedRoomsScreen} />
+        <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

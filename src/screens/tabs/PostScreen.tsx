@@ -14,11 +14,21 @@ export default function PostScreen({ navigation }: any) {
   const [district, setDistrict] = useState('');
   const [description, setDescription] = useState('');
   
-  // NEW: Room Type State
+  // Room Type State
   const [roomType, setRoomType] = useState<'Single' | 'Shared'>('Single');
   const [gender, setGender] = useState<'Male' | 'Female' | 'Any'>('Any');
   
+  // NEW: Location Link State
+  const [locationLink, setLocationLink] = useState('');
+  
   const [isLoading, setIsLoading] = useState(false);
+
+  // NEW: Security Check for Map Links
+  const isValidMapLink = (url: string) => {
+    if (!url.trim()) return true; // Optional field, so empty is fine
+    const mapRegex = /(google\.com\/maps|maps\.app\.goo\.gl|goo\.gl\/maps|yandex\.[a-z]{2,3}\/maps|yandex\.com|2gis\.uz|go\.2gis\.com)/i;
+    return mapRegex.test(url);
+  };
 
   const handlePublish = async () => {
     // 1. Basic validation
@@ -27,7 +37,13 @@ export default function PostScreen({ navigation }: any) {
       return;
     }
 
-    // 2. Ensure user is actually logged in
+    // 2. Link Validation
+    if (!isValidMapLink(locationLink)) {
+      Alert.alert("Invalid Link", "Please provide a valid Google Maps, Yandex, or 2GIS link.");
+      return;
+    }
+
+    // 3. Ensure user is actually logged in
     if (!auth.currentUser) {
       Alert.alert("Error", "You must be logged in to post a listing.");
       return;
@@ -36,26 +52,28 @@ export default function PostScreen({ navigation }: any) {
     setIsLoading(true);
 
     try {
-      // 3. Save the listing to Firestore 'listings' collection
+      // 4. Save the listing to Firestore 'listings' collection
       await addDoc(collection(db, 'listings'), {
         userId: auth.currentUser.uid,
         district: district.trim(),
         price: Number(price),
-        roomType: roomType, // <-- NEW: Saves Single or Shared to database
+        roomType: roomType,
         genderPreference: gender,
         description: description.trim(),
+        locationLink: locationLink.trim(), // <-- NEW: Saves the link to database
         imageUrl: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80",
         isVerified: false, 
         createdAt: serverTimestamp(),
       });
 
-      // 4. Success! Clear the form and go back to Home
+      // 5. Success! Clear the form and go back to Home
       Alert.alert("Success!", "Your room has been published.");
       setDistrict('');
       setPrice('');
       setDescription('');
       setRoomType('Single');
       setGender('Any');
+      setLocationLink(''); // Clear the link
       
       // Navigate back to the Home tab
       navigation.navigate('Home');
@@ -100,7 +118,6 @@ export default function PostScreen({ navigation }: any) {
             placeholderTextColor="#A0A0A0"
           />
 
-          {/* NEW: Room Type Selector */}
           <Text style={styles.label}>Room Type</Text>
           <View style={styles.chipContainer}>
             {['Single', 'Shared'].map((option) => (
@@ -139,6 +156,18 @@ export default function PostScreen({ navigation }: any) {
             numberOfLines={4}
             value={description}
             onChangeText={setDescription}
+            placeholderTextColor="#A0A0A0"
+          />
+
+          {/* NEW: Map Link Input */}
+          <Text style={styles.label}>Location Map Link (Optional)</Text>
+          <TextInput 
+            style={styles.input} 
+            placeholder="Paste Google Maps, Yandex, or 2GIS link" 
+            value={locationLink} 
+            onChangeText={setLocationLink} 
+            autoCapitalize="none"
+            autoCorrect={false}
             placeholderTextColor="#A0A0A0"
           />
 
