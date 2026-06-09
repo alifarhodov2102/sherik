@@ -25,12 +25,8 @@ export default function ListingCard({ listing }: Props) {
   const isMyListing = auth.currentUser?.uid === listing.userId;
 
   const handleMessagePress = async () => {
-    // Check updated to remove the .isAnonymous block
     if (!auth.currentUser) {
-      Alert.alert(
-        'Hold up',
-        'You need to log in with a phone number to message users.'
-      );
+      Alert.alert('Hold up', 'You need to log in with a phone number to message users.');
       return;
     }
 
@@ -38,32 +34,24 @@ export default function ListingCard({ listing }: Props) {
       const myId = auth.currentUser.uid;
       const hostId = listing.userId;
 
-      // NEW: Safety check! Catch old listings before they crash the app.
       if (!hostId) {
-        Alert.alert(
-          "Oops!", 
-          "This is an old test listing that doesn't have an owner attached to it. Please try a newer listing!"
-        );
+        Alert.alert("Oops!", "This is an old test listing. Please try a newer listing!");
         return;
       }
 
       const chatId = [myId, hostId].sort().join('_');
-
       const chatRef = doc(db, 'chats', chatId);
       const chatSnap = await getDoc(chatRef);
 
+      // Do NOT create the chat here. Just check if it exists.
       if (!chatSnap.exists()) {
-        await setDoc(chatRef, {
-          participants: [myId, hostId],
-          lastMessage: 'Chat started',
-          updatedAt: new Date(),
-        });
+        // No chat exists? Send them to the Paywall.
+        navigation.navigate('Paywall', { chatId, hostId });
+      } else {
+        // Chat exists? They already paid. Send to ChatRoom.
+        navigation.navigate('ChatRoom', { chatId, hostId });
       }
 
-      navigation.navigate('ChatRoom', {
-        chatId,
-        hostId,
-      });
     } catch (error) {
       console.error('Error starting chat:', error);
       Alert.alert('Error', 'Could not start chat.');
@@ -72,31 +60,41 @@ export default function ListingCard({ listing }: Props) {
 
   return (
     <View style={styles.card}>
-      <Image
-        source={{ uri: listing.imageUrl }}
-        style={styles.image}
-      />
+      {/* Tapping anywhere on the top part of the card goes to Details */}
+      <TouchableOpacity 
+        activeOpacity={0.8} 
+        onPress={() => navigation.navigate('ListingDetail', { listing })}
+      >
+        <Image
+          source={{ uri: listing.imageUrl }}
+          style={styles.image}
+        />
 
-      <View style={styles.contentContainer}>
-        <View style={styles.headerRow}>
-          <Text style={styles.district}>{listing.district}</Text>
+        <View style={styles.contentContainer}>
+          <View style={styles.headerRow}>
+            <Text style={styles.district}>{listing.district}</Text>
 
-          {listing.isVerified && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>✓ Verified</Text>
-            </View>
-          )}
+            {listing.isVerified && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>✓ Verified</Text>
+              </View>
+            )}
+          </View>
+
+          <Text style={styles.price}>
+            ${listing.price} / month
+          </Text>
+
+          {/* Displays Single/Shared + Gender Preference cleanly */}
+          <Text style={styles.details}>
+            {listing.roomType || 'Single'} Room • Prefers: {listing.genderPreference}
+          </Text>
         </View>
+      </TouchableOpacity>
 
-        <Text style={styles.price}>
-          ${listing.price} / month
-        </Text>
-
-        <Text style={styles.gender}>
-          Preference: {listing.genderPreference}
-        </Text>
-
-        {!isMyListing && (
+      {/* The Message Button stays safely at the bottom of the card */}
+      {!isMyListing && (
+        <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
           <TouchableOpacity
             style={styles.messageButton}
             onPress={handleMessagePress}
@@ -105,8 +103,8 @@ export default function ListingCard({ listing }: Props) {
               Message Roommate
             </Text>
           </TouchableOpacity>
-        )}
-      </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -131,7 +129,9 @@ const styles = StyleSheet.create({
   },
 
   contentContainer: {
-    padding: 16,
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
 
   headerRow: {
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
 
-  gender: {
+  details: {
     fontSize: 14,
     color: '#666',
     marginBottom: 12,

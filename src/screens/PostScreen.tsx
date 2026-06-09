@@ -13,7 +13,11 @@ export default function PostScreen({ navigation }: any) {
   const [price, setPrice] = useState('');
   const [district, setDistrict] = useState('');
   const [description, setDescription] = useState('');
+  
+  // NEW: Room Type State
+  const [roomType, setRoomType] = useState<'Single' | 'Shared'>('Single');
   const [gender, setGender] = useState<'Male' | 'Female' | 'Any'>('Any');
+  
   const [isLoading, setIsLoading] = useState(false);
 
   const handlePublish = async () => {
@@ -34,14 +38,14 @@ export default function PostScreen({ navigation }: any) {
     try {
       // 3. Save the listing to Firestore 'listings' collection
       await addDoc(collection(db, 'listings'), {
-        userId: auth.currentUser.uid, // Connects the post to the logged-in user
+        userId: auth.currentUser.uid,
         district: district.trim(),
         price: Number(price),
+        roomType: roomType, // <-- NEW: Saves Single or Shared to database
         genderPreference: gender,
         description: description.trim(),
-        // We use a clean, placeholder image for now to keep development moving fast
         imageUrl: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80",
-        isVerified: false, // Default to unverified as per your Trust & Safety spec V1
+        isVerified: false, 
         createdAt: serverTimestamp(),
       });
 
@@ -50,6 +54,7 @@ export default function PostScreen({ navigation }: any) {
       setDistrict('');
       setPrice('');
       setDescription('');
+      setRoomType('Single');
       setGender('Any');
       
       // Navigate back to the Home tab
@@ -95,6 +100,22 @@ export default function PostScreen({ navigation }: any) {
             placeholderTextColor="#A0A0A0"
           />
 
+          {/* NEW: Room Type Selector */}
+          <Text style={styles.label}>Room Type</Text>
+          <View style={styles.chipContainer}>
+            {['Single', 'Shared'].map((option) => (
+              <TouchableOpacity 
+                key={option}
+                style={[styles.chip, roomType === option && styles.chipActive]}
+                onPress={() => setRoomType(option as any)}
+              >
+                <Text style={[styles.chipText, roomType === option && styles.chipTextActive]}>
+                  {option}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <Text style={styles.label}>Roommate Preference</Text>
           <View style={styles.chipContainer}>
             {['Any', 'Male', 'Female'].map((option) => (
@@ -113,7 +134,7 @@ export default function PostScreen({ navigation }: any) {
           <Text style={styles.label}>Description & Rules</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
-            placeholder="Describe the apartment and any rules (e.g., no smoking)..."
+            placeholder="Describe the apartment, if you are a student/professional, and any rules (e.g., non-smoker)..."
             multiline
             numberOfLines={4}
             value={description}

@@ -6,7 +6,6 @@ import { Listing } from '../types';
 
 // --- FIREBASE IMPORTS ---
 import { collection, query, orderBy, onSnapshot, doc } from 'firebase/firestore';
-import { signOut } from 'firebase/auth';
 import { db, auth } from '../firebase/config';
 
 export default function HomeScreen({ navigation }: any) {
@@ -28,7 +27,9 @@ export default function HomeScreen({ navigation }: any) {
           genderPreference: data.genderPreference,
           isVerified: data.isVerified || false,
           imageUrl: data.imageUrl,
-          userId: data.userId, // <--- ADDED THIS VITAL LINE!
+          userId: data.userId,
+          roomType: data.roomType || 'Single',
+          description: data.description || '',
         } as Listing;
       });
       setListings(liveListings);
@@ -37,7 +38,6 @@ export default function HomeScreen({ navigation }: any) {
 
     // 2. Fetch Profile Name for the Avatar Circle
     let unsubscribeUser = () => {};
-    // Removed the .isAnonymous check here to match our auth setup
     if (auth.currentUser) {
       const userDocRef = doc(db, 'users', auth.currentUser.uid);
       unsubscribeUser = onSnapshot(userDocRef, (docSnap) => {
@@ -60,13 +60,10 @@ export default function HomeScreen({ navigation }: any) {
     setTimeout(() => setRefreshing(false), 1000);
   }, []);
 
-  // NEW: Smart Navigation Logic
   const handleProfileCirclePress = async () => {
-    // If they skipped, they have no currentUser at all. Kick to Login.
     if (!auth.currentUser) {
       navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
     } else {
-      // If they logged in, go to Profile.
       navigation.navigate('Profile');
     }
   };
@@ -79,7 +76,6 @@ export default function HomeScreen({ navigation }: any) {
           <Text style={styles.subtitle}>Tashkent's Trusted Co-living</Text>
         </View>
         
-        {/* Updated User Circle */}
         <TouchableOpacity style={styles.profileCircle} onPress={handleProfileCirclePress}>
           <Text style={styles.profileCircleText}>{userInitial}</Text>
         </TouchableOpacity>

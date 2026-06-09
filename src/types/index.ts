@@ -8,4 +8,6 @@ export interface Listing {
   isVerified: boolean;
   imageUrl: string;
   userId: string; 
+  roomType?: string;
+  description?: string;
 }
