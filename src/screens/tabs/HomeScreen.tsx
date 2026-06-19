@@ -30,6 +30,7 @@ export default function HomeScreen({ navigation }: any) {
           userId: data.userId,
           roomType: data.roomType || 'Single',
           description: data.description || '',
+          locationLink: data.locationLink || '', // <-- THE FIX: Added locationLink here!
         } as Listing;
       });
       setListings(liveListings);

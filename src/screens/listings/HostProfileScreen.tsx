@@ -1,6 +1,16 @@
 // src/screens/listings/HostProfileScreen.tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ActivityIndicator, Linking, Alert } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  SafeAreaView, 
+  TouchableOpacity, 
+  ActivityIndicator, 
+  Linking, 
+  Alert,
+  Clipboard // NEW: For one-click copying
+} from 'react-native';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 
@@ -26,9 +36,15 @@ export default function HostProfileScreen({ route, navigation }: any) {
     fetchHost();
   }, [hostId]);
 
+  // NEW: One-click Copy Handler
+  const copyToClipboard = (text: string, label: string) => {
+    if (!text) return;
+    Clipboard.setString(text);
+    Alert.alert("Copied!", `${label} has been copied to your clipboard.`);
+  };
+
   const handleCall = () => {
     if (hostData?.phoneNumber) {
-      // Formats the number for the phone dialer
       const cleanNumber = hostData.phoneNumber.replace(/\s/g, '');
       Linking.openURL(`tel:${cleanNumber}`);
     } else {
@@ -66,21 +82,40 @@ export default function HostProfileScreen({ route, navigation }: any) {
           {hostData?.occupation || 'Roommate'} • Smokes: {hostData?.smoker || 'No'}
         </Text>
 
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>Unlocked Phone Number</Text>
-          <Text style={styles.phoneNumber}>{hostData?.phoneNumber || 'Not provided'}</Text>
+        {/* Clicking anywhere on this card copies the phone number instantly */}
+        <TouchableOpacity 
+          style={styles.card}
+          activeOpacity={0.7}
+          onPress={() => copyToClipboard(hostData?.phoneNumber, "Phone number")}
+        >
+          <View style={styles.cardHeaderRow}>
+            <Text style={styles.cardLabel}>Unlocked Phone Number</Text>
+          </View>
+          
+          {/* THE FIX: Smaller font size, limits to 1 line, and shrinks text to fit perfectly */}
+          <Text 
+            style={styles.phoneNumber}
+            adjustsFontSizeToFit={true}
+            numberOfLines={1}
+          >
+            {hostData?.phoneNumber || 'Not provided'}
+          </Text>
           
           <TouchableOpacity style={styles.callButton} onPress={handleCall}>
             <Text style={styles.callButtonText}>Call {hostData?.name?.split(' ')[0] || 'User'}</Text>
           </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
 
-        {/* Small reference to the room they are talking about */}
+        {/* Clicking here copies the room context */}
         {listing && (
-          <View style={styles.referenceCard}>
-            <Text style={styles.referenceLabel}>Regarding</Text>
+          <TouchableOpacity 
+            style={styles.referenceCard}
+            activeOpacity={0.7}
+            onPress={() => copyToClipboard(`${listing.roomType || 'Single'} Room in ${listing.district}`, "Room details")}
+          >
+            <Text style={styles.referenceLabel}>Regarding (Tap to Copy)</Text>
             <Text style={styles.referenceText}>{listing.roomType || 'Single'} Room in {listing.district}</Text>
-          </View>
+          </TouchableOpacity>
         )}
       </View>
     </SafeAreaView>
@@ -102,13 +137,17 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 16, color: '#666', marginBottom: 32 },
 
   card: { backgroundColor: '#FFF', width: '100%', padding: 24, borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2, marginBottom: 16 },
-  cardLabel: { fontSize: 14, fontWeight: '600', color: '#666', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 },
-  phoneNumber: { fontSize: 28, fontWeight: '800', color: '#111', marginBottom: 24, letterSpacing: 1 },
+  cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  cardLabel: { fontSize: 13, fontWeight: '600', color: '#666', textTransform: 'uppercase', letterSpacing: 1 },
+  copyBadge: { fontSize: 12, color: '#007AFF', fontWeight: '600' },
+  
+  // FIXED STYLING: Shifted down to 24px so long phone codes stay neat
+  phoneNumber: { fontSize: 24, fontWeight: '800', color: '#111', marginBottom: 24, letterSpacing: 1 },
   
   callButton: { backgroundColor: '#00C853', height: 56, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
   callButtonText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
 
   referenceCard: { backgroundColor: '#EAEAEA', width: '100%', padding: 16, borderRadius: 12, alignItems: 'center' },
   referenceLabel: { fontSize: 12, color: '#666', fontWeight: '600', textTransform: 'uppercase', marginBottom: 4 },
-  referenceText: { fontSize: 14, color: '#111', fontWeight: '700' }
+  referenceText: { fontSize: 14, color: '#111', fontWeight: '700', textAlign: 'center' }
 });

@@ -1,6 +1,6 @@
 // src/screens/listings/ListingDetailScreen.tsx
 import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, SafeAreaView, Alert, Linking } from 'react-native';
 import { doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '../../firebase/config';
 
@@ -23,7 +23,6 @@ export default function ListingDetailScreen({ route, navigation }: any) {
         return;
       }
 
-      // THE LEAK FIX: Securely attach the listing ID here too!
       const userPair = [myId, hostId].sort().join('_');
       const chatId = `${listing.id}_${userPair}`;
       
@@ -31,15 +30,28 @@ export default function ListingDetailScreen({ route, navigation }: any) {
       const chatSnap = await getDoc(chatRef);
 
       if (!chatSnap.exists()) {
-        // NEW: Passed the 'listing' object into the Paywall
         navigation.navigate('Paywall', { chatId, hostId, listing });
       } else {
-        // NEW: Passed the 'listing' object into the ChatRoom
         navigation.navigate('ChatRoom', { chatId, hostId, listing });
       }
     } catch (error) {
       console.error('Error starting chat:', error);
       Alert.alert('Error', 'Could not start chat.');
+    }
+  };
+
+  const openMap = async () => {
+    if (!listing.locationLink) return;
+    
+    try {
+      const supported = await Linking.canOpenURL(listing.locationLink);
+      if (supported) {
+        await Linking.openURL(listing.locationLink);
+      } else {
+        Alert.alert("Error", "Cannot open this map link on your device.");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Could not open the map link.");
     }
   };
 
@@ -80,6 +92,20 @@ export default function ListingDetailScreen({ route, navigation }: any) {
             {listing.description || 'No additional description provided.'}
           </Text>
           
+          <View style={styles.divider} />
+
+          <Text style={styles.sectionTitle}>Location</Text>
+          
+          {/* THE FIX: The beautiful button is back! */}
+          {listing.locationLink ? (
+            <TouchableOpacity style={styles.mapButton} onPress={openMap}>
+              <Text style={styles.mapIcon}>📍</Text>
+              <Text style={styles.mapButtonText}>Open in Maps</Text>
+            </TouchableOpacity>
+          ) : (
+            <Text style={styles.descriptionText}>Exact map link not provided.</Text>
+          )}
+          
           <View style={{ height: 100 }} />
         </View>
       </ScrollView>
@@ -112,6 +138,12 @@ const styles = StyleSheet.create({
   tag: { backgroundColor: '#F5F5F5', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
   tagText: { color: '#111', fontWeight: '600', fontSize: 14 },
   descriptionText: { fontSize: 16, color: '#444', lineHeight: 26 },
+  
+  // Reverted to the clean button style
+  mapButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F5F5F5', padding: 16, borderRadius: 12, marginTop: 8 },
+  mapIcon: { fontSize: 20, marginRight: 12 },
+  mapButtonText: { fontSize: 16, fontWeight: '700', color: '#111' },
+  
   footer: { position: 'absolute', bottom: 0, width: '100%', padding: 24, backgroundColor: '#FFF', borderTopWidth: 1, borderTopColor: '#EAEAEA' },
   messageButton: { backgroundColor: '#111', paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
   messageButtonText: { color: '#FFF', fontSize: 16, fontWeight: '700' }
